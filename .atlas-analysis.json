@@ -1,0 +1,84 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "CVA (Class Variance Authority)",
+  "projectDescription": "A TypeScript utility library for building type-safe, variant-based CSS class name components framework-agnostically.",
+  "theme": "willow",
+  "primaryColor": "#afafaf",
+  "lightColor": "#484848",
+  "darkColor": "#2b2b2b",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "getting-started/installation", "getting-started/quickstart"]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "getting-started/variants",
+              "getting-started/compound-variants",
+              "getting-started/default-variants",
+              "getting-started/composing-components",
+              "getting-started/extending-components",
+              "getting-started/typescript"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/react",
+              "examples/vue",
+              "examples/svelte",
+              "examples/astro",
+              "examples/11ty",
+              "examples/bem",
+              "examples/other-use-cases"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": ["faqs"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api-reference/cva",
+              "api-reference/cx",
+              "api-reference/compose",
+              "api-reference/define-config",
+              "api-reference/variant-props"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Type-safe variant-based class name generation",
+    "Compound variants (class combinations based on multiple variant values)",
+    "Default variant values with the ability to reset with null",
+    "Framework agnostic — works with React, Vue, Svelte, Astro, and more",
+    "Tiny bundle size (~1.6KB minzipped)",
+    "Custom cx hook via defineConfig for Tailwind Merge integration",
+    "First-class TypeScript support with VariantProps type helper",
+    "Compose multiple cva components together"
+  ],
+  "publicApiSurface": [
+    "cva(config) — creates a variant-aware class name builder function",
+    "cx(...inputs) — concatenates class names (alias for clsx)",
+    "compose(...components) — merges multiple cva components into one",
+    "defineConfig(options) — creates a custom cva/cx/compose with hooks",
+    "VariantProps<Component> — TypeScript utility type to extract variant props",
+    "ClassValue — TypeScript type for valid class name values",
+    "CXOptions — TypeScript type for cx input parameters",
+    "CXReturn — TypeScript type for cx return value"
+  ]
+}
