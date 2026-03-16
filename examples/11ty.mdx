@@ -1,0 +1,133 @@
+---
+title: "11ty (Eleventy)"
+description: "Use CVA with Eleventy to generate variant class strings from JavaScript template components."
+---
+
+Eleventy supports JavaScript template files (`.11ty.js`) that export a `render` function. CVA fits naturally in this pattern — define your variants at the top of the file and call them in the render function.
+
+## JavaScript template component
+
+```js
+// src/_includes/button.11ty.js
+const { cva } = require("cva");
+
+const button = cva({
+  base: "button",
+  variants: {
+    intent: {
+      primary: [
+        "bg-blue-500",
+        "text-white",
+        "border-transparent",
+        "hover:bg-blue-600",
+      ],
+      secondary: [
+        "bg-white",
+        "text-gray-800",
+        "border-gray-400",
+        "hover:bg-gray-100",
+      ],
+    },
+    size: {
+      small: ["text-sm", "py-1", "px-2"],
+      medium: ["text-base", "py-2", "px-4"],
+    },
+  },
+  compoundVariants: [
+    { intent: "primary", size: "medium", className: "uppercase" },
+  ],
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+  },
+});
+
+module.exports = function ({ label, intent, size }) {
+  return `<button class="${button({ intent, size })}">${label}</button>`;
+};
+```
+
+<Note>
+  Eleventy runs in Node.js, so use `require("cva")` with CommonJS or configure your project for ESM and use `import`.
+</Note>
+
+## ESM syntax
+
+If your Eleventy project uses ESM (e.g., with `"type": "module"` in `package.json`):
+
+```js
+// src/_includes/button.11ty.js
+import { cva } from "cva";
+
+const button = cva({
+  base: "button",
+  variants: {
+    intent: {
+      primary: ["bg-blue-500", "text-white", "border-transparent", "hover:bg-blue-600"],
+      secondary: ["bg-white", "text-gray-800", "border-gray-400", "hover:bg-gray-100"],
+    },
+    size: {
+      small: ["text-sm", "py-1", "px-2"],
+      medium: ["text-base", "py-2", "px-4"],
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+  },
+});
+
+export default function ({ label, intent, size }) {
+  return `<button class="${button({ intent, size })}">${label}</button>`;
+};
+```
+
+## Using CVA in Eleventy configuration
+
+You can also generate utility functions in `.eleventy.js` and expose them as global data or shortcodes:
+
+```js
+// .eleventy.js
+const { cva } = require("cva");
+
+const button = cva({
+  base: "inline-flex items-center justify-center rounded font-medium",
+  variants: {
+    intent: {
+      primary: "bg-blue-600 text-white hover:bg-blue-700",
+      secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+    },
+    size: {
+      sm: "h-8 px-3 text-sm",
+      md: "h-10 px-4 text-sm",
+    },
+  },
+  defaultVariants: { intent: "primary", size: "md" },
+});
+
+module.exports = function (eleventyConfig) {
+  // Register as a shortcode for use in Nunjucks/Liquid templates
+  eleventyConfig.addShortcode(
+    "buttonClass",
+    (intent, size) => button({ intent, size })
+  );
+};
+```
+
+Then in a Nunjucks template:
+
+```njk
+{# page.njk #}
+<button class="{% buttonClass 'primary', 'md' %}">
+  Click me
+</button>
+```
+
+Or in a Liquid template:
+
+```liquid
+{# page.liquid #}
+<button class="{% buttonClass 'secondary', 'sm' %}">
+  Learn more
+</button>
+```

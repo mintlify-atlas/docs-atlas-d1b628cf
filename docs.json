@@ -1,122 +1,81 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "CVA (Class Variance Authority)",
+  "theme": "willow",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#afafaf",
+    "light": "#484848",
+    "dark": "#2b2b2b"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/d534404c-6843-49b1-a4b4-3ff5b471f76f.png",
+  "logo": {
+    "light": "https://media.brand.dev/699c40a3-f46c-4d58-9d98-b0b56e7cd3ca.jpg",
+    "dark": "https://media.brand.dev/699c40a3-f46c-4d58-9d98-b0b56e7cd3ca.jpg"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/joe-bell/cva"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/joe-bell/cva"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
+            "pages": ["index", "getting-started/installation", "getting-started/quickstart"]
+          },
+          {
+            "group": "Core Concepts",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "getting-started/variants",
+              "getting-started/compound-variants",
+              "getting-started/default-variants",
+              "getting-started/composing-components",
+              "getting-started/extending-components",
+              "getting-started/typescript"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Examples",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "examples/react",
+              "examples/vue",
+              "examples/svelte",
+              "examples/astro",
+              "examples/11ty",
+              "examples/bem",
+              "examples/other-use-cases"
             ]
           },
           {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
+            "group": "Help",
+            "pages": ["faqs"]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "API",
             "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/cva",
+              "api-reference/cx",
+              "api-reference/compose",
+              "api-reference/define-config",
+              "api-reference/variant-props"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

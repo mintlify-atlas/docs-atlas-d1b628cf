@@ -1,0 +1,132 @@
+---
+title: "compose"
+description: "Merge multiple cva components into a single component whose props are the union of all constituent variant props."
+---
+
+## Overview
+
+`compose` takes two or more `cva` components and returns a new component that accepts the **union** of all their variant props. At call time, each constituent component is invoked with the shared props (minus `class`/`className`), and their resulting class strings are joined together.
+
+Ad-hoc `class` and `className` props are stripped from the individual component calls and re-applied once at the composed level, so they are never duplicated.
+
+```typescript
+import { compose, cva } from "cva";
+```
+
+**Signature:** `compose(...components: CVA[]) => (props?) => string`
+
+---
+
+## Parameters
+
+<ParamField path="...components" type="ReturnType<CVA>[]" required>
+  Two or more components created with `cva`. TypeScript infers the merged variant props automatically from the provided components.
+</ParamField>
+
+---
+
+## Returned function
+
+The returned function accepts an optional props object:
+
+<ParamField path="props" type="UnionOfVariantProps & { class?: ClassValue; className?: ClassValue }">
+  The union of all variant props from every constituent component, plus optional `class` or `className` for ad-hoc overrides.
+</ParamField>
+
+### Return value
+
+<ResponseField name="string" type="string">
+  A single space-separated string of all class names resolved from every component, with any `class`/`className` appended at the end.
+</ResponseField>
+
+---
+
+## TypeScript behavior
+
+The return type automatically infers the merged variant props. Given two components with variants `shadow` and `gap`, the composed component's props type is:
+
+```typescript
+{
+  shadow?: "sm" | "md" | undefined;
+  gap?: "unset" | 1 | 2 | 3 | undefined;
+} | undefined
+```
+
+This is derived via `UnionToIntersection` over the `VariantProps` of each constituent component — no manual type annotation needed.
+
+---
+
+## Example
+
+```typescript
+import { compose, cva } from "cva";
+
+const box = cva({
+  variants: {
+    shadow: {
+      sm: "shadow-sm",
+      md: "shadow-md",
+    },
+  },
+  defaultVariants: {
+    shadow: "sm",
+  },
+});
+
+const stack = cva({
+  variants: {
+    gap: {
+      unset: null,
+      1: "gap-1",
+      2: "gap-2",
+      3: "gap-3",
+    },
+  },
+  defaultVariants: {
+    gap: "unset",
+  },
+});
+
+// Compose into a card component
+const card = compose(box, stack);
+
+card();
+// => "shadow-sm"  (box default applied; stack gap=unset adds nothing)
+
+card({ shadow: "md" });
+// => "shadow-md"
+
+card({ gap: 2 });
+// => "shadow-sm gap-2"
+
+card({ shadow: "md", gap: 3 });
+// => "shadow-md gap-3"
+
+// Ad-hoc class is appended once, not duplicated across components
+card({ shadow: "md", gap: 3, class: "my-card" });
+// => "shadow-md gap-3 my-card"
+
+card({ shadow: "md", gap: 3, className: "my-card" });
+// => "shadow-md gap-3 my-card"
+```
+
+---
+
+## Customizing `compose` with `defineConfig`
+
+Like `cva` and `cx`, a custom `compose` created via `defineConfig` passes the final class string through the configured `onComplete` hook:
+
+```typescript
+import { defineConfig } from "cva";
+import { twMerge } from "tailwind-merge";
+
+export const { compose, cva } = defineConfig({
+  hooks: {
+    onComplete: (className) => twMerge(className),
+  },
+});
+```
+
+<Tip>
+  See [`defineConfig`](/api-reference/define-config) for full customization options.
+</Tip>

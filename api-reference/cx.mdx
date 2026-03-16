@@ -1,0 +1,138 @@
+---
+title: "cx"
+description: "Concatenate class values into a single string — an alias for clsx with optional hook support."
+---
+
+## Overview
+
+`cx` is a re-export of [`clsx`](https://github.com/lukeed/clsx) bundled with CVA. It accepts any number of `ClassValue` arguments, filters out falsy values, and joins the results with a space.
+
+When created via [`defineConfig`](/api-reference/define-config), the `cx` function passes the final class string through the configured `onComplete` hook before returning it.
+
+```typescript
+import { cx } from "cva";
+```
+
+**Signature:** `cx(...inputs: ClassValue[]) => string`
+
+---
+
+## Parameters
+
+<ParamField path="...inputs" type="ClassValue[]">
+  One or more class values to concatenate. A `ClassValue` is:
+
+  ```typescript
+  type ClassValue =
+    | string
+    | number
+    | bigint
+    | boolean
+    | null
+    | undefined
+    | ClassValue[]          // nested arrays, flattened automatically
+    | Record<string, any>;  // object — keys with truthy values are included
+  ```
+
+  Falsy values (`false`, `null`, `undefined`, `0`, `""`) are ignored.
+</ParamField>
+
+---
+
+## Return value
+
+<ResponseField name="string" type="string">
+  A single space-separated string of all resolved class names.
+</ResponseField>
+
+---
+
+## Types
+
+```typescript
+export type CXOptions = Parameters<CX>; // ClassValue[]
+export type CXReturn = ReturnType<CX>;  // string
+```
+
+`CXOptions` represents the tuple of arguments you can pass to `cx`, and `CXReturn` is always `string`.
+
+---
+
+## Examples
+
+### Strings
+
+```typescript
+import { cx } from "cva";
+
+cx("foo", "bar", "baz");
+// => "foo bar baz"
+```
+
+### Conditional classes via objects
+
+Object keys are included when their value is truthy:
+
+```typescript
+const isError = true;
+const isDisabled = false;
+
+cx("base", {
+  "text-red-500": isError,
+  "opacity-50":   isDisabled,
+});
+// => "base text-red-500"
+```
+
+### Arrays (including nested)
+
+Arrays are flattened recursively — useful for composing class lists:
+
+```typescript
+cx(["foo", undefined, "bar", undefined, "baz"]);
+// => "foo bar baz"
+
+cx(["foo", ["bar", ["baz", "qux"]]]);
+// => "foo bar baz qux"
+```
+
+### Mixed inputs
+
+```typescript
+cx("base", ["a", "b"], { c: true, d: false }, undefined, "e");
+// => "base a b c e"
+```
+
+### Falsy values are ignored
+
+```typescript
+cx(null, undefined, false, 0, "", "real-class");
+// => "real-class"
+
+cx(false && "foo"); // => ""
+cx(true  && "foo"); // => "foo"
+```
+
+---
+
+## Customizing `cx` with `defineConfig`
+
+The default `cx` export applies no post-processing. To add a transformation (e.g. deduplication via `tailwind-merge`), create a custom instance:
+
+```typescript
+import { defineConfig } from "cva";
+import { twMerge } from "tailwind-merge";
+
+export const { cx } = defineConfig({
+  hooks: {
+    onComplete: (className) => twMerge(className),
+  },
+});
+
+cx("px-2 py-1", "px-4");
+// => "py-1 px-4"  (tailwind-merge deduplicates px-*)
+```
+
+<Tip>
+  See [`defineConfig`](/api-reference/define-config) for full customization options.
+</Tip>

@@ -1,0 +1,239 @@
+---
+title: "Quickstart"
+description: "Build a type-safe Button component with variants in a few steps."
+---
+
+This guide walks through building a `Button` component with `intent` and `size` variants using the `cva` package.
+
+<Steps>
+  <Step title="Install cva">
+    Install the package with your preferred package manager.
+
+    <CodeGroup>
+
+```bash npm
+npm install cva
+```
+
+```bash yarn
+yarn add cva
+```
+
+```bash pnpm
+pnpm add cva
+```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Create a basic component">
+    Import `cva` and define a `buttonVariants` function with a `base` class and an `intent` variant.
+
+    ```typescript button.ts
+    import { cva } from "cva";
+
+    const buttonVariants = cva({
+      base: "font-semibold border rounded",
+      variants: {
+        intent: {
+          primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+          secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+        },
+      },
+    });
+
+    // Usage
+    buttonVariants({ intent: "primary" });
+    // => "font-semibold border rounded bg-blue-500 text-white border-transparent hover:bg-blue-600"
+    ```
+
+    The `cva` function accepts a config object with:
+    - `base` — classes applied to every variant
+    - `variants` — a map of variant names to their possible values and classes
+  </Step>
+
+  <Step title="Add a size variant">
+    Extend the component with a `size` variant.
+
+    ```typescript button.ts
+    import { cva } from "cva";
+
+    const buttonVariants = cva({
+      base: "font-semibold border rounded",
+      variants: {
+        intent: {
+          primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+          secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+        },
+        size: {
+          sm: "text-sm py-1 px-2",
+          md: "text-base py-2 px-4",
+          lg: "text-lg py-3 px-6",
+        },
+      },
+    });
+
+    buttonVariants({ intent: "primary", size: "md" });
+    // => "font-semibold border rounded bg-blue-500 text-white border-transparent hover:bg-blue-600 text-base py-2 px-4"
+    ```
+  </Step>
+
+  <Step title="Set default variants">
+    Use `defaultVariants` so callers don't have to specify every variant every time.
+
+    ```typescript button.ts
+    import { cva } from "cva";
+
+    const buttonVariants = cva({
+      base: "font-semibold border rounded",
+      variants: {
+        intent: {
+          primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+          secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+        },
+        size: {
+          sm: "text-sm py-1 px-2",
+          md: "text-base py-2 px-4",
+          lg: "text-lg py-3 px-6",
+        },
+      },
+      defaultVariants: {
+        intent: "primary",
+        size: "md",
+      },
+    });
+
+    buttonVariants();
+    // => "font-semibold border rounded bg-blue-500 ..." (uses defaults)
+
+    buttonVariants({ intent: "secondary" });
+    // => uses secondary intent, md size (from default)
+    ```
+  </Step>
+
+  <Step title="Add TypeScript types with VariantProps">
+    Use `VariantProps` to extract the variant prop types and wire them into your component's props interface.
+
+    ```typescript button.ts
+    import { cva, type VariantProps } from "cva";
+
+    const buttonVariants = cva({
+      base: "font-semibold border rounded",
+      variants: {
+        intent: {
+          primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+          secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+        },
+        size: {
+          sm: "text-sm py-1 px-2",
+          md: "text-base py-2 px-4",
+          lg: "text-lg py-3 px-6",
+        },
+      },
+      defaultVariants: {
+        intent: "primary",
+        size: "md",
+      },
+    });
+
+    type ButtonVariants = VariantProps<typeof buttonVariants>;
+    // => { intent?: "primary" | "secondary"; size?: "sm" | "md" | "lg" }
+    ```
+  </Step>
+
+  <Step title="Use in a React component">
+    Combine `buttonVariants` with your component's own HTML props.
+
+    ```tsx button.tsx
+    import { cva, type VariantProps } from "cva";
+
+    const buttonVariants = cva({
+      base: "font-semibold border rounded",
+      variants: {
+        intent: {
+          primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+          secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+        },
+        size: {
+          sm: "text-sm py-1 px-2",
+          md: "text-base py-2 px-4",
+          lg: "text-lg py-3 px-6",
+        },
+      },
+      defaultVariants: {
+        intent: "primary",
+        size: "md",
+      },
+    });
+
+    type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
+      VariantProps<typeof buttonVariants>;
+
+    export function Button({ intent, size, className, ...props }: ButtonProps) {
+      return (
+        <button
+          className={buttonVariants({ intent, size, className })}
+          {...props}
+        />
+      );
+    }
+    ```
+
+    ```tsx app.tsx
+    import { Button } from "./button";
+
+    export default function App() {
+      return (
+        <div>
+          <Button>Default button</Button>
+          <Button intent="secondary" size="sm">Small secondary</Button>
+          <Button intent="primary" size="lg">Large primary</Button>
+        </div>
+      );
+    }
+    ```
+  </Step>
+</Steps>
+
+## Complete button component
+
+Here is the full example in one file:
+
+```tsx button.tsx
+import { cva, type VariantProps } from "cva";
+
+const buttonVariants = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    size: {
+      sm: "text-sm py-1 px-2",
+      md: "text-base py-2 px-4",
+      lg: "text-lg py-3 px-6",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
+  VariantProps<typeof buttonVariants>;
+
+export function Button({ intent, size, className, ...props }: ButtonProps) {
+  return (
+    <button
+      className={buttonVariants({ intent, size, className })}
+      {...props}
+    />
+  );
+}
+```
+
+<Note>
+  The `className` prop is forwarded directly into `buttonVariants()`. CVA accepts both `class` and `className` as override props, so additional classes passed by the consumer are merged with the variant classes.
+</Note>

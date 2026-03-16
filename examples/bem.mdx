@@ -1,0 +1,144 @@
+---
+title: "BEM"
+description: "Use CVA with BEM (Block Element Modifier) CSS methodology by using BEM class names as variant values."
+---
+
+CVA is agnostic to CSS naming conventions. BEM class names work as variant values just like Tailwind utilities — the output is still a plain string of space-separated class names.
+
+## CSS
+
+Define your BEM classes as you normally would:
+
+```css
+/* button.css */
+.button {
+  /* base button styles */
+}
+
+.button--primary {
+  /* primary intent */
+}
+.button--secondary {
+  /* secondary intent */
+}
+
+.button--small {
+  /* small size */
+}
+.button--medium {
+  /* medium size */
+}
+
+/* compound: primary + medium */
+.button--primary-medium {
+  /* e.g. uppercase tracking */
+}
+```
+
+## TypeScript
+
+Map BEM modifier classes directly to variant values:
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  base: "button",
+  variants: {
+    intent: {
+      primary: "button--primary",
+      secondary: "button--secondary",
+    },
+    size: {
+      small: "button--small",
+      medium: "button--medium",
+    },
+  },
+  compoundVariants: [
+    {
+      intent: "primary",
+      size: "medium",
+      className: "button--primary-medium",
+    },
+  ],
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+  },
+});
+
+button();
+// => "button button--primary button--medium button--primary-medium"
+
+button({ intent: "secondary", size: "small" });
+// => "button button--secondary button--small"
+
+button({ intent: "primary", size: "small" });
+// => "button button--primary button--small"
+```
+
+## Element variants
+
+BEM element classes (e.g. `button__icon`) can also be managed with CVA:
+
+```typescript
+import { cva } from "cva";
+
+const buttonIcon = cva({
+  base: "button__icon",
+  variants: {
+    position: {
+      left: "button__icon--left",
+      right: "button__icon--right",
+    },
+    size: {
+      small: "button__icon--small",
+      medium: "button__icon--medium",
+    },
+  },
+  defaultVariants: {
+    position: "left",
+    size: "medium",
+  },
+});
+
+buttonIcon({ position: "right", size: "small" });
+// => "button__icon button__icon--right button__icon--small"
+```
+
+<Info>
+  CVA does not enforce any naming convention. Use BEM, SMACSS, OOCSS, or your own system — the API stays the same.
+</Info>
+
+## Multiple variant arrays
+
+You can pass an array of classes for a single variant value, which is useful when a BEM modifier also applies a utility reset:
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  base: "button",
+  variants: {
+    intent: {
+      primary: ["button--primary", "is-interactive"],
+      secondary: ["button--secondary", "is-interactive"],
+      ghost: "button--ghost",
+    },
+    disabled: {
+      true: ["button--disabled", "is-disabled"],
+      false: [],
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    disabled: false,
+  },
+});
+
+button({ intent: "primary" });
+// => "button button--primary is-interactive"
+
+button({ intent: "secondary", disabled: true });
+// => "button button--secondary is-interactive button--disabled is-disabled"
+```

@@ -1,0 +1,118 @@
+---
+title: "Extending components"
+description: "Add extra classes or override defaults by passing class or className to any CVA component."
+---
+
+Every CVA component accepts an optional `class` **or** `className` prop. This lets you append additional classes at the call site without touching the component definition — useful for spacing, layout overrides, or one-off customisations.
+
+## Passing `class` or `className`
+
+```typescript
+// components/button.ts
+import { cva } from "cva";
+
+const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+    },
+  },
+  defaultVariants: { intent: "primary" },
+});
+
+button({ class: "m-4" });
+// => "font-semibold border rounded bg-blue-500 text-white ... m-4"
+
+button({ className: "m-4" });
+// => "font-semibold border rounded bg-blue-500 text-white ... m-4"
+```
+
+<Note>
+  `class` and `className` are mutually exclusive in the TypeScript types — passing both at once is a type error, though both values will still appear in the output at runtime.
+</Note>
+
+## Building a new component on top of an existing one
+
+To create a new component that extends another with additional variants or different defaults, define a new `cva()` call. You can use `VariantProps` to derive prop types from the original.
+
+```typescript
+import type { VariantProps } from "cva";
+import { cva } from "cva";
+
+// Base button
+export const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    size: {
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+  },
+});
+
+export type ButtonProps = VariantProps<typeof button>;
+
+// Extended component — adds an `elevated` variant
+export const elevatedButton = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    size: {
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+    },
+    elevated: {
+      true: "shadow-lg",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+    elevated: false,
+  },
+});
+
+export type ElevatedButtonProps = VariantProps<typeof elevatedButton>;
+```
+
+## Making variants required
+
+By default all variant props are optional. To make a variant required, use TypeScript's utility types on the extracted `VariantProps`:
+
+```typescript
+import { cva, type VariantProps } from "cva";
+
+export const buttonVariants = cva({
+  variants: {
+    optional: { a: "...", b: "..." },
+    required: { a: "...", b: "..." },
+  },
+});
+
+export type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+
+export interface ButtonProps
+  extends Omit<ButtonVariantProps, "required">,
+    Required<Pick<ButtonVariantProps, "required">> {}
+
+export const button = (props: ButtonProps) => buttonVariants(props);
+
+// ❌ TypeScript Error: Property "required" is missing
+button({});
+
+// ✅
+button({ required: "a" });
+```

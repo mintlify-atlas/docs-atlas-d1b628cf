@@ -1,0 +1,149 @@
+---
+title: "Vue"
+description: "Use CVA with Vue 3 to build variant-driven components with full TypeScript support."
+---
+
+CVA works seamlessly with Vue 3. Define your variants in the `<script setup>` block and bind the result to `:class`.
+
+## Basic button component
+
+A `Button.vue` component using CVA with `<script setup>` and TypeScript:
+
+```vue
+<!-- Button.vue -->
+<script setup lang="ts">
+import { cva, type VariantProps } from "cva";
+
+const button = cva({
+  base: "inline-flex items-center justify-center rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+  variants: {
+    intent: {
+      primary: "bg-blue-600 text-white hover:bg-blue-700",
+      secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+      danger: "bg-red-600 text-white hover:bg-red-700",
+    },
+    size: {
+      sm: "h-8 px-3 text-sm",
+      md: "h-10 px-4 text-sm",
+      lg: "h-12 px-6 text-base",
+    },
+  },
+  compoundVariants: [
+    {
+      intent: "primary",
+      size: "lg",
+      className: "tracking-wide",
+    },
+  ],
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+type ButtonVariants = VariantProps<typeof button>;
+
+const props = withDefaults(
+  defineProps<{
+    intent?: ButtonVariants["intent"];
+    size?: ButtonVariants["size"];
+    class?: string;
+  }>(),
+  {
+    intent: "primary",
+    size: "md",
+  }
+);
+</script>
+
+<template>
+  <button :class="button({ intent: props.intent, size: props.size, className: props.class })">
+    <slot />
+  </button>
+</template>
+```
+
+## Typing `defineProps` with `VariantProps`
+
+`VariantProps` extracts the union types for each variant key, keeping your prop types and CVA config in sync:
+
+```vue
+<script setup lang="ts">
+import { cva, type VariantProps } from "cva";
+
+const badge = cva({
+  base: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+  variants: {
+    variant: {
+      default: "bg-gray-100 text-gray-800",
+      success: "bg-green-100 text-green-800",
+      warning: "bg-yellow-100 text-yellow-800",
+      error: "bg-red-100 text-red-800",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+type BadgeVariants = VariantProps<typeof badge>;
+
+const props = defineProps<{
+  variant?: BadgeVariants["variant"];
+}>();
+</script>
+
+<template>
+  <span :class="badge({ variant: props.variant })">
+    <slot />
+  </span>
+</template>
+```
+
+## Using `class` as a passthrough prop
+
+Vue automatically forwards the `class` attribute to the root element. To merge it with CVA-generated classes, accept it as a prop explicitly and pass it to the CVA call:
+
+```vue
+<script setup lang="ts">
+import { cva, type VariantProps } from "cva";
+
+const alert = cva({
+  base: "relative w-full rounded-lg border p-4",
+  variants: {
+    variant: {
+      info: "border-blue-200 bg-blue-50 text-blue-800",
+      warning: "border-yellow-200 bg-yellow-50 text-yellow-800",
+      error: "border-red-200 bg-red-50 text-red-800",
+    },
+  },
+  defaultVariants: {
+    variant: "info",
+  },
+});
+
+type AlertVariants = VariantProps<typeof alert>;
+
+const props = defineProps<{
+  variant?: AlertVariants["variant"];
+  class?: string;
+}>();
+</script>
+
+<template>
+  <div :class="alert({ variant: props.variant, className: props.class })">
+    <slot />
+  </div>
+</template>
+```
+
+```vue
+<!-- Usage -->
+<Alert variant="warning" class="mt-4">
+  Please review the changes before continuing.
+</Alert>
+```
+
+<Tip>
+  Pass `className` (not `class`) into the CVA call when merging the forwarded class — CVA accepts both `class` and `className` as merge props.
+</Tip>

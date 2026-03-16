@@ -1,0 +1,177 @@
+---
+title: "Compound variants"
+description: "Apply classes only when a specific combination of variants is active."
+---
+
+Compound variants let you apply additional classes when **multiple variants match simultaneously**. They are defined in the `compoundVariants` array, where each entry specifies the required variant values plus the classes to apply.
+
+## Basic usage
+
+Each entry in `compoundVariants` is an object whose keys match variant names plus a `class` (or `className`) property.
+
+```typescript
+// components/button.ts
+import { cva } from "cva";
+
+const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+      warning: "bg-yellow-500 border-transparent hover:bg-yellow-600",
+    },
+    size: {
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+    },
+  },
+  compoundVariants: [
+    {
+      // Applied only when intent="primary" AND size="medium"
+      intent: "primary",
+      size: "medium",
+      class: "uppercase",
+    },
+  ],
+});
+
+button({ intent: "primary", size: "medium" });
+// => "font-semibold border rounded bg-blue-500 ... text-base py-2 px-4 uppercase"
+
+button({ intent: "primary", size: "small" });
+// => "font-semibold border rounded bg-blue-500 ..." (no uppercase — size is not "medium")
+```
+
+## `class` vs `className`
+
+Compound variant entries accept either `class` or `className` — they are interchangeable. Use whichever is consistent with your framework.
+
+<Tabs>
+  <Tab title="class">
+    ```typescript
+    compoundVariants: [
+      {
+        intent: "primary",
+        size: "medium",
+        class: "button--primary-medium uppercase",
+      },
+    ]
+    ```
+  </Tab>
+  <Tab title="className">
+    ```typescript
+    compoundVariants: [
+      {
+        intent: "primary",
+        size: "medium",
+        className: "button--primary-medium uppercase",
+      },
+    ]
+    ```
+  </Tab>
+</Tabs>
+
+## Matching multiple values for one key
+
+To fire a compound variant when a single variant has **any one of several values**, pass an array instead of a string.
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      warning: "bg-yellow-500 border-transparent hover:bg-yellow-600",
+      danger: "bg-red-500 text-white border-transparent hover:bg-red-600",
+    },
+    size: {
+      medium: "text-base py-2 px-4",
+      large: "text-lg py-2.5 px-4",
+    },
+  },
+  compoundVariants: [
+    {
+      // Fires when intent is "warning" OR "danger"
+      intent: ["warning", "danger"],
+      class: "!border-red-500",
+    },
+    {
+      intent: ["warning", "danger"],
+      size: "medium",
+      class: "button--warning-danger-medium",
+    },
+  ],
+});
+
+button({ intent: "warning", size: "large" });
+// => "bg-yellow-500 ... text-lg py-2.5 px-4 !border-red-500"
+
+button({ intent: "danger", size: "medium" });
+// => "bg-red-500 ... text-base py-2 px-4 !border-red-500 button--warning-danger-medium"
+```
+
+## Full example with boolean variants
+
+Compound variants work with boolean-style (`"true"`/`"false"`) variants too. The `StringToBoolean` mapping means you can pass real booleans in TypeScript.
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  base: "button font-semibold border rounded",
+  variants: {
+    intent: {
+      unset: null,
+      primary:
+        "button--primary bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      warning:
+        "button--warning bg-yellow-500 border-transparent hover:bg-yellow-600",
+    },
+    disabled: {
+      unset: null,
+      true: "button--disabled opacity-050 cursor-not-allowed",
+      false: "button--enabled cursor-pointer",
+    },
+    size: {
+      unset: null,
+      medium: "button--medium text-base py-2 px-4",
+      large: "button--large text-lg py-2.5 px-4",
+    },
+  },
+  compoundVariants: [
+    // primary + medium -> uppercase
+    {
+      intent: "primary",
+      size: "medium",
+      class: "button--primary-medium uppercase",
+    },
+    // warning + enabled -> show text color
+    {
+      intent: "warning",
+      disabled: false,
+      class: "button--warning-enabled text-gray-800",
+    },
+    // warning + disabled -> different text
+    {
+      intent: "warning",
+      disabled: true,
+      class: "button--warning-disabled text-black",
+    },
+  ],
+});
+
+button({ intent: "primary", size: "medium" });
+// compound fires: "... button--primary-medium uppercase"
+
+button({ intent: "warning", disabled: false });
+// compound fires: "... button--warning-enabled text-gray-800"
+
+button({ intent: "warning", disabled: true, size: "large" });
+// compound fires: "... button--warning-disabled text-black"
+```
+
+<Tip>
+  Compound variant `class`/`className` values also accept the full `ClassValue` type — strings, arrays, and conditional objects are all valid.
+</Tip>

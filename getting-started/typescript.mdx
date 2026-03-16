@@ -1,0 +1,165 @@
+---
+title: "TypeScript"
+description: "Use VariantProps and related types to get full type safety with CVA components."
+---
+
+CVA is written in TypeScript and exports all the types you need to build fully type-safe component APIs.
+
+## `VariantProps`
+
+The `VariantProps` utility type extracts the variant props from a CVA component, excluding the internal `class` and `className` props.
+
+```typescript
+// components/button.ts
+import type { VariantProps } from "cva";
+import { cva } from "cva";
+
+const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    size: {
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+    },
+  },
+});
+
+export type ButtonProps = VariantProps<typeof button>;
+// => { intent?: "primary" | "secondary" | undefined;
+//      size?: "small" | "medium" | undefined; }
+```
+
+<Note>
+  `VariantProps` omits `class` and `className` from the extracted type — those are internal CVA props and should not be part of your public component API surface.
+</Note>
+
+## Using with React
+
+Combine `VariantProps` with the native element props for a complete component prop type:
+
+```typescript
+import type { VariantProps } from "cva";
+import { cva } from "cva";
+import * as React from "react";
+
+const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    size: {
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+  },
+});
+
+interface ButtonProps
+  extends React.ComponentProps<"button">,
+    VariantProps<typeof button> {}
+
+export const Button: React.FC<ButtonProps> = ({
+  intent,
+  size,
+  className,
+  ...props
+}) => (
+  <button className={button({ intent, size, className })} {...props} />
+);
+```
+
+## `StringToBoolean` — boolean variants
+
+When a variant has keys `"true"` and/or `"false"`, the internal `StringToBoolean` mapped type automatically widens those keys to real booleans in the TypeScript prop type. You do not need to do anything special:
+
+```typescript
+import { cva, type VariantProps } from "cva";
+
+const button = cva({
+  variants: {
+    disabled: {
+      true: "opacity-50 cursor-not-allowed",
+      false: "cursor-pointer",
+    },
+  },
+});
+
+type ButtonProps = VariantProps<typeof button>;
+// => { disabled?: boolean | undefined }
+
+// ✅ Both are valid TypeScript:
+button({ disabled: true });
+button({ disabled: false });
+```
+
+## `ClassValue` — accepting class inputs
+
+The `ClassValue` type describes every value CVA accepts for `base`, variant values, `class`, and `className`. Import it when you need to accept arbitrary class inputs in your own utilities:
+
+```typescript
+import type { ClassValue } from "cva";
+import { cx } from "cva";
+
+function buildClasses(...inputs: ClassValue[]): string {
+  return cx(...inputs);
+}
+
+buildClasses("foo", ["bar", "baz"], { qux: true, quux: false });
+// => "foo bar baz qux"
+```
+
+`ClassValue` covers strings, numbers, bigints, booleans, null, undefined, arrays, and conditional objects (`Record<string, any>`).
+
+## Required variants
+
+All variant props are optional by default. Use TypeScript utility types to make specific variants required:
+
+```typescript
+import { cva, type VariantProps } from "cva";
+
+export const buttonVariants = cva({
+  variants: {
+    optional: { a: "...", b: "..." },
+    required: { a: "...", b: "..." },
+  },
+});
+
+export type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+
+export interface ButtonProps
+  extends Omit<ButtonVariantProps, "required">,
+    Required<Pick<ButtonVariantProps, "required">> {}
+
+export const button = (props: ButtonProps) => buttonVariants(props);
+
+// ❌ TypeScript Error:
+// Argument of type "{}" is not assignable to parameter of type "ButtonProps".
+//   Property "required" is missing in type "{}" but required in type "ButtonProps".
+button({});
+
+// ✅
+button({ required: "a" });
+```
+
+## Note on generic parameters
+
+The `cva` function signature includes an internal generic parameter (`_`) that is restricted to internal use only. Do not attempt to pass generic type arguments to `cva` directly — rely on inference and `VariantProps` for all typing needs.
+
+```typescript
+// ❌ Do not do this:
+const button = cva<MyType>({ ... });
+
+// ✅ Use inference + VariantProps instead:
+const button = cva({ ... });
+type ButtonProps = VariantProps<typeof button>;
+```

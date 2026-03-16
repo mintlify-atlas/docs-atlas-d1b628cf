@@ -1,0 +1,132 @@
+---
+title: "defineConfig"
+description: "Create a custom cva, cx, and compose configured with lifecycle hooks such as tailwind-merge deduplication."
+---
+
+## Overview
+
+`defineConfig` creates a custom set of `cva`, `cx`, and `compose` functions that share a common configuration. The most common use case is applying [`tailwind-merge`](https://github.com/dcastil/tailwind-merge) (or any other post-processor) to every resolved class string via the `onComplete` hook.
+
+```typescript
+import { defineConfig } from "cva";
+```
+
+**Signature:** `defineConfig(options?) => { cva, cx, compose }`
+
+---
+
+## Parameters
+
+<ParamField path="options" type="DefineConfigOptions">
+  Optional configuration object.
+
+  <Expandable title="options.hooks">
+    <ParamField path="options.hooks.onComplete" type="(className: string) => string">
+      A callback invoked with the fully resolved class string immediately before it is returned. The return value replaces the class string.
+
+      This is the correct place to apply post-processors such as `tailwind-merge`.
+
+      ```typescript
+      defineConfig({
+        hooks: {
+          onComplete: (className) => twMerge(className),
+        },
+      });
+      ```
+    </ParamField>
+
+    <ParamField path="options.hooks['cx:done']" type="(className: string) => string">
+      <Warning>
+        **Deprecated.** Use `onComplete` instead. This hook has identical behavior to `onComplete` but will be removed in a future version.
+      </Warning>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+---
+
+## Return value
+
+<ResponseField name="cva" type="CVA">
+  A `cva` function identical to the default export but with the configured hooks applied to every resolved class string.
+</ResponseField>
+
+<ResponseField name="cx" type="CX">
+  A `cx` function identical to the default export but with the configured hooks applied after concatenation.
+</ResponseField>
+
+<ResponseField name="compose" type="Compose">
+  A `compose` function identical to the default export but with the configured hooks applied to the final composed class string.
+</ResponseField>
+
+---
+
+## Tailwind Merge integration
+
+Tailwind CSS can produce conflicting utility classes when variant classes overlap (e.g. a base class of `px-2` overridden by a call-time `px-4`). `tailwind-merge` resolves these conflicts by keeping only the last class in each Tailwind group.
+
+Configure this once with `defineConfig` and use the returned functions everywhere:
+
+```typescript
+// lib/cva.ts
+import { defineConfig } from "cva";
+import { twMerge } from "tailwind-merge";
+
+export const { cva, cx, compose } = defineConfig({
+  hooks: {
+    onComplete: (className) => twMerge(className),
+  },
+});
+```
+
+Then import from your local file instead of from `"cva"` directly:
+
+```typescript
+import { cva, cx, compose } from "~/lib/cva";
+```
+
+Now every class string produced by `cva`, `cx`, or `compose` is automatically deduplicated:
+
+```typescript
+const button = cva({
+  base: "px-2 py-1",
+  variants: {
+    size: {
+      lg: "px-4 py-2",
+    },
+  },
+});
+
+button({ size: "lg" });
+// Without twMerge: "px-2 py-1 px-4 py-2"  (conflicting px-*)
+// With    twMerge: "py-1 px-4 py-2"         (px-2 removed)
+```
+
+---
+
+## Custom hook example
+
+You can use `onComplete` for any string transformation, not just Tailwind deduplication:
+
+```typescript
+import { defineConfig } from "cva";
+
+export const { cva, cx } = defineConfig({
+  hooks: {
+    onComplete: (className) => className.trim().replace(/\s+/g, " "),
+  },
+});
+```
+
+---
+
+## Default exports
+
+The top-level `cva`, `cx`, and `compose` named exports from the `"cva"` package are themselves the result of calling `defineConfig()` with no options:
+
+```typescript
+// Internally, the package does:
+export const { compose, cva, cx } = defineConfig();
+```
+
+This means all three are safe to use without `defineConfig` unless you need hook behavior.

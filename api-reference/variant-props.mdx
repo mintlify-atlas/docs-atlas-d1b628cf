@@ -1,0 +1,171 @@
+---
+title: "VariantProps"
+description: "Utility types for extracting variant prop types from cva components and working with class values."
+---
+
+## `VariantProps<Component>`
+
+`VariantProps` is a TypeScript utility type that extracts the variant prop types from a `cva` component. It omits `class` and `className` from the result, leaving only the variant keys.
+
+**Signature:**
+
+```typescript
+type VariantProps<Component extends (...args: any) => any> = Omit<
+  OmitUndefined<Parameters<Component>[0]>,
+  "class" | "className"
+>;
+```
+
+`OmitUndefined<T>` strips `undefined` from a union, which means variants that have a `defaultVariants` entry (and are therefore truly optional) remain optional in the extracted type, while variants without defaults are required.
+
+---
+
+## Basic usage
+
+```typescript
+import { cva, type VariantProps } from "cva";
+
+const button = cva({
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white",
+      secondary: "bg-white text-gray-800",
+    },
+    size: {
+      sm: "text-sm",
+      md: "text-base",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+type ButtonProps = VariantProps<typeof button>;
+// => { intent?: "primary" | "secondary"; size?: "sm" | "md" }
+//    (both optional because they have defaultVariants)
+```
+
+---
+
+## React component integration
+
+Extend native HTML element props alongside `VariantProps` to create fully-typed component interfaces:
+
+```tsx
+import { cva, type VariantProps } from "cva";
+
+const button = cva({
+  base: "font-semibold rounded",
+  variants: {
+    intent: {
+      primary:   "bg-blue-500 text-white",
+      secondary: "bg-white text-gray-800",
+      danger:    "bg-red-500 text-white",
+    },
+    size: {
+      sm: "text-sm py-1 px-2",
+      md: "text-base py-2 px-4",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+interface ButtonProps
+  extends React.ComponentProps<"button">,
+          VariantProps<typeof button> {}
+
+export function Button({ intent, size, className, ...props }: ButtonProps) {
+  return (
+    <button
+      className={button({ intent, size, className })}
+      {...props}
+    />
+  );
+}
+```
+
+---
+
+## Required vs optional variants
+
+Variants without a `defaultVariants` entry are required in the extracted type:
+
+```typescript
+const badge = cva({
+  variants: {
+    color: {
+      red:   "bg-red-100 text-red-800",
+      green: "bg-green-100 text-green-800",
+    },
+  },
+  // no defaultVariants
+});
+
+type BadgeProps = VariantProps<typeof badge>;
+// => { color: "red" | "green" }  — color is required
+```
+
+With `defaultVariants`:
+
+```typescript
+const badge = cva({
+  variants: {
+    color: { red: "bg-red-100", green: "bg-green-100" },
+  },
+  defaultVariants: { color: "green" },
+});
+
+type BadgeProps = VariantProps<typeof badge>;
+// => { color?: "red" | "green" }  — color is optional
+```
+
+---
+
+## Other exported types
+
+### `ClassValue`
+
+The full union type accepted anywhere CVA or `cx` accepts a class value:
+
+```typescript
+export type ClassValue =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null
+  | undefined
+  | ClassValue[]          // nested arrays, flattened recursively
+  | Record<string, any>;  // object — truthy keys are included
+```
+
+### `CXOptions`
+
+The argument tuple of the `cx` function:
+
+```typescript
+export type CXOptions = Parameters<CX>; // ClassValue[]
+```
+
+Useful when building wrappers around `cx`:
+
+```typescript
+import { cx, type CXOptions } from "cva";
+
+function myCx(...inputs: CXOptions) {
+  return cx(...inputs);
+}
+```
+
+### `CXReturn`
+
+The return type of `cx` — always `string`:
+
+```typescript
+export type CXReturn = ReturnType<CX>; // string
+```

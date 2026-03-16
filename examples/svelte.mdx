@@ -1,0 +1,146 @@
+---
+title: "Svelte"
+description: "Use CVA with Svelte to build variant-driven components with typed props."
+---
+
+CVA works with Svelte 4 and Svelte 5. Define variants in the `<script>` block and bind the result to `class`.
+
+## Basic button component
+
+```svelte
+<!-- Button.svelte -->
+<script lang="ts">
+  import { cva, type VariantProps } from "cva";
+
+  const button = cva({
+    base: "inline-flex items-center justify-center rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+    variants: {
+      intent: {
+        primary: "bg-blue-600 text-white hover:bg-blue-700",
+        secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+        danger: "bg-red-600 text-white hover:bg-red-700",
+      },
+      size: {
+        sm: "h-8 px-3 text-sm",
+        md: "h-10 px-4 text-sm",
+        lg: "h-12 px-6 text-base",
+      },
+    },
+    compoundVariants: [
+      {
+        intent: "primary",
+        size: "lg",
+        className: "tracking-wide",
+      },
+    ],
+    defaultVariants: {
+      intent: "primary",
+      size: "md",
+    },
+  });
+
+  type ButtonVariants = VariantProps<typeof button>;
+
+  export let intent: ButtonVariants["intent"] = "primary";
+  export let size: ButtonVariants["size"] = "md";
+  let className: string = "";
+  export { className as class };
+</script>
+
+<button class={button({ intent, size, className })}>
+  <slot />
+</button>
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+  import Button from "./Button.svelte";
+</script>
+
+<Button intent="primary" size="lg">Submit</Button>
+<Button intent="secondary">Cancel</Button>
+<Button intent="danger" size="sm">Delete</Button>
+```
+
+## Svelte 5 runes syntax
+
+With Svelte 5's runes API, use `$props()` for cleaner prop declarations:
+
+```svelte
+<!-- Button.svelte (Svelte 5) -->
+<script lang="ts">
+  import { cva, type VariantProps } from "cva";
+
+  const button = cva({
+    base: "inline-flex items-center justify-center rounded font-medium transition-colors",
+    variants: {
+      intent: {
+        primary: "bg-blue-600 text-white hover:bg-blue-700",
+        secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+      },
+      size: {
+        sm: "h-8 px-3 text-sm",
+        md: "h-10 px-4 text-sm",
+        lg: "h-12 px-6 text-base",
+      },
+    },
+    defaultVariants: {
+      intent: "primary",
+      size: "md",
+    },
+  });
+
+  type ButtonVariants = VariantProps<typeof button>;
+
+  const {
+    intent = "primary",
+    size = "md",
+    class: className = "",
+    ...rest
+  }: ButtonVariants & { class?: string; [key: string]: unknown } = $props();
+</script>
+
+<button class={button({ intent, size, className })} {...rest}>
+  {@render children?.()}
+</button>
+```
+
+## Passing extra classes
+
+Svelte does not automatically merge a consumer-provided `class` with internal classes. Export the `class` prop explicitly and forward it to the CVA call:
+
+```svelte
+<!-- Badge.svelte -->
+<script lang="ts">
+  import { cva, type VariantProps } from "cva";
+
+  const badge = cva({
+    base: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+    variants: {
+      variant: {
+        default: "bg-gray-100 text-gray-800",
+        success: "bg-green-100 text-green-800",
+        warning: "bg-yellow-100 text-yellow-800",
+        error: "bg-red-100 text-red-800",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  });
+
+  type BadgeVariants = VariantProps<typeof badge>;
+
+  export let variant: BadgeVariants["variant"] = "default";
+  let className = "";
+  export { className as class };
+</script>
+
+<span class={badge({ variant, className })}>
+  <slot />
+</span>
+```
+
+<Note>
+  The `export { className as class }` pattern is necessary because `class` is a reserved word in JavaScript and cannot be used directly as an `export let` identifier.
+</Note>

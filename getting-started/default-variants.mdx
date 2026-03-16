@@ -1,0 +1,133 @@
+---
+title: "Default variants"
+description: "Set default variant values so calling a CVA component without props still produces classes."
+---
+
+`defaultVariants` lets you pre-select a value for any variant. When you call the component without specifying that variant, the default is used automatically.
+
+## Basic usage
+
+```typescript
+// components/button.ts
+import { cva } from "cva";
+
+const button = cva({
+  base: "button font-semibold border rounded",
+  variants: {
+    intent: {
+      unset: null,
+      primary:
+        "button--primary bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary:
+        "button--secondary bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    disabled: {
+      unset: null,
+      true: "button--disabled opacity-050 cursor-not-allowed",
+      false: "button--enabled cursor-pointer",
+    },
+    size: {
+      unset: null,
+      small: "button--small text-sm py-1 px-2",
+      medium: "button--medium text-base py-2 px-4",
+      large: "button--large text-lg py-2.5 px-4",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+    disabled: false,
+  },
+});
+
+// No props — defaults are applied
+button();
+// => "button font-semibold border rounded button--primary ... button--enabled cursor-pointer button--medium ..."
+
+// Override one default
+button({ intent: "secondary" });
+// => "button font-semibold border rounded button--secondary ... button--enabled cursor-pointer button--medium ..."
+
+// Override all
+button({ intent: "secondary", size: "large", disabled: true });
+// => "button font-semibold border rounded button--secondary ... button--disabled ... button--large ..."
+```
+
+## `undefined` vs `null` vs `"unset"`
+
+There are three ways to handle "no value" for a variant:
+
+| Passed value | Behaviour |
+|---|---|
+| Not passed / `undefined` | Falls back to `defaultVariants` |
+| `"unset"` (key mapped to `null`) | Explicitly selects nothing; overrides the default |
+| `null` (passed as prop value at runtime) | Treated as falsy; no class applied |
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  base: "button font-semibold border rounded",
+  variants: {
+    size: {
+      unset: null,
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+    },
+  },
+  defaultVariants: {
+    size: "medium",
+  },
+});
+
+// undefined -> falls back to default "medium"
+button({ size: undefined });
+// => "button font-semibold border rounded text-base py-2 px-4"
+
+// "unset" -> explicitly selects null, no size class
+button({ size: "unset" });
+// => "button font-semibold border rounded"
+```
+
+<Note>
+  Passing `undefined` for a variant prop is the same as not passing it — the `defaultVariant` value is used. Passing `"unset"` (a key whose value is `null`) explicitly overrides the default to produce no classes.
+</Note>
+
+## Defaults and compound variants
+
+Default variants also interact with `compoundVariants`. A compound variant fires when the **resolved** variant values (after applying defaults) match its conditions.
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  base: "button font-semibold border rounded",
+  variants: {
+    intent: {
+      primary:
+        "button--primary bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      warning:
+        "button--warning bg-yellow-500 border-transparent hover:bg-yellow-600",
+    },
+    size: {
+      medium: "button--medium text-base py-2 px-4",
+      large: "button--large text-lg py-2.5 px-4",
+    },
+  },
+  compoundVariants: [
+    {
+      intent: "primary",
+      size: "medium",
+      class: "button--primary-medium uppercase",
+    },
+  ],
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+  },
+});
+
+// No props — both defaults apply, compound fires
+button();
+// => "button font-semibold border rounded button--primary ... button--medium ... button--primary-medium uppercase"
+```

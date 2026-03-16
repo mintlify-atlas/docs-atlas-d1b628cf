@@ -1,97 +1,102 @@
 ---
 title: "Introduction"
-description: "Welcome to the new home for your documentation"
+description: "Class Variance Authority — build type-safe, variant-based UI components without CSS-in-JS."
 ---
 
-## Setting up
+# Class Variance Authority
 
-Get your documentation site up and running in minutes.
+**CVA** is a tiny (~1.6KB) TypeScript utility that brings first-class variant support to any CSS approach — Tailwind CSS, CSS Modules, plain CSS, or BEM.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+CSS-in-TS libraries like [Stitches](https://stitches.dev/docs/variants) and [Vanilla Extract](https://vanilla-extract.style/documentation/api/style-variants/) are fantastic for building type-safe UI components, but they require you to fully adopt their styling system. CVA gives you the same developer experience — type-safe variants, compound variants, and default values — while letting you write CSS however you prefer.
 
-## Make it yours
+```typescript
+import { cva } from "cva";
 
-Design a docs site that looks great and empowers your users.
+const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    size: {
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "medium",
+  },
+});
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+button({ intent: "secondary", size: "small" });
+// => "font-semibold border rounded bg-white text-gray-800 border-gray-400 hover:bg-gray-100 text-sm py-1 px-2"
+```
+
+## Why CVA?
+
+Creating variants with traditional CSS approaches is tedious — manually matching classes to props, duplicating logic, and writing TypeScript types by hand. CVA automates all of that.
+
+<CardGroup cols={2}>
+  <Card title="Type-safe variants" icon="shield-check">
+    TypeScript infers your variant types automatically — no manual type declarations needed.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Framework agnostic" icon="layer-group">
+    Works with React, Vue, Svelte, Astro, 11ty, or any framework that accepts a class string.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Compound variants" icon="code-branch">
+    Apply classes only when a specific combination of variants is active.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Tiny bundle" icon="feather">
+    ~1.6KB minzipped. No runtime overhead — it's just string concatenation.
   </Card>
-</Columns>
+  <Card title="Composable" icon="puzzle-piece">
+    Compose multiple CVA components together to build complex, reusable component APIs.
+  </Card>
+  <Card title="Configurable" icon="sliders">
+    Use `defineConfig` to integrate with tools like Tailwind Merge via the `onComplete` hook.
+  </Card>
+</CardGroup>
 
-## Create beautiful pages
+## Quick navigation
 
-Everything you need to create world-class documentation.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/getting-started/installation">
+    Install CVA via npm, yarn, or pnpm
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Build your first component with variants in minutes
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/cva">
+    Full API documentation for every export
+  </Card>
+  <Card title="Examples" icon="code" href="/examples/react">
+    Real-world examples with React, Vue, Svelte, and more
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Packages
 
-## Need inspiration?
+CVA is available as two packages:
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+| Package | Description |
+|---------|-------------|
+| [`cva`](https://www.npmjs.com/package/cva) | Current package — beta channel with latest features |
+| [`class-variance-authority`](https://www.npmjs.com/package/class-variance-authority) | Legacy package — stable v0.x releases |
+
+<Note>
+  New projects should use the `cva` package. The `class-variance-authority` package is maintained for backward compatibility.
+</Note>
+
+## Acknowledgements
+
+CVA builds on the shoulders of great open-source work:
+
+- [**Stitches**](https://stitches.dev/) by WorkOS — pioneered the variants API pattern
+- [**clb**](https://github.com/crswll/clb) by Bill Criswell — the original inspiration for this project
+- [**clsx**](https://github.com/lukeed/clsx) by Luke Edwards — powers the underlying class concatenation
+
+## License
+
+[Apache-2.0](https://github.com/joe-bell/cva/blob/main/LICENSE) © [Joe Bell](https://joebell.studio)

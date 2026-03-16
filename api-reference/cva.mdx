@@ -1,0 +1,280 @@
+---
+title: "cva"
+description: "Create a class variance authority component that maps variant props to class strings."
+---
+
+## Overview
+
+The `cva` function defines a component's base classes and variant logic, returning a callable function that resolves the correct class string at runtime.
+
+```typescript
+import { cva } from "cva";
+
+const component = cva(config);
+const className = component(props);
+```
+
+**Signature:** `cva(config) => (props?) => string`
+
+---
+
+## Config parameters
+
+<ParamField path="base" type="ClassValue">
+  Base classes that are always applied, regardless of variants. Accepts any value that `clsx` understands: a string, an array of strings, an object (`Record<string, any>` where truthy keys are included), or falsy values (`null`, `undefined`, `false`) which are ignored.
+
+  ```typescript
+  // string
+  const button = cva({ base: "font-semibold rounded" });
+
+  // array
+  const button = cva({ base: ["font-semibold", "rounded"] });
+
+  // omitted entirely
+  const button = cva({ variants: { ... } });
+  ```
+</ParamField>
+
+<ParamField path="variants" type="Record<string, Record<string, ClassValue>>">
+  An object whose keys are variant names and whose values are objects mapping variant keys to class values.
+
+  ```typescript
+  const button = cva({
+    variants: {
+      intent: {
+        primary: "bg-blue-500 text-white",
+        secondary: "bg-white text-gray-800",
+      },
+      size: {
+        sm: "text-sm py-1 px-2",
+        md: "text-base py-2 px-4",
+        lg: "text-lg py-2.5 px-4",
+      },
+    },
+  });
+  ```
+
+  <Expandable title="Resetting a variant with 'unset'">
+    Variant keys with a `null` value act as an explicit "no class" option. The conventional name for this key is `"unset"`:
+
+    ```typescript
+    const button = cva({
+      variants: {
+        size: {
+          unset: null,   // applying size="unset" adds no classes
+          sm: "text-sm",
+          md: "text-base",
+        },
+      },
+    });
+
+    button({ size: "unset" }); // ""
+    ```
+
+    You can also pass `null` at call time to override a `defaultVariant`:
+
+    ```typescript
+    button({ size: null }); // falls back to undefined; no class applied
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="compoundVariants" type="Array<VariantSelector & { class?: ClassValue; className?: ClassValue }>">
+  An array of objects that apply additional classes when a specific combination of variants is active. Each entry contains variant key/value selectors plus a `class` or `className` to apply when all selectors match.
+
+  A selector value can be a single variant key or an **array** of variant keys — the class is applied when the active variant matches any item in the array.
+
+  ```typescript
+  const button = cva({
+    variants: {
+      intent: { primary: "bg-blue-500", warning: "bg-yellow-500" },
+      size: { md: "py-2 px-4", lg: "py-2.5 px-4" },
+    },
+    compoundVariants: [
+      {
+        intent: "primary",
+        size: "md",
+        class: "uppercase",          // applied only when intent=primary AND size=md
+      },
+      {
+        intent: ["warning", "primary"],
+        class: "border-2",           // applied when intent is warning OR primary
+      },
+    ],
+  });
+  ```
+
+  <Note>
+    Use either `class` or `className` in each entry — not both. They are mutually exclusive.
+  </Note>
+</ParamField>
+
+<ParamField path="defaultVariants" type="Record<string, string | boolean>">
+  An object providing default values for variants when they are not explicitly passed at call time.
+
+  ```typescript
+  const button = cva({
+    variants: {
+      intent: { primary: "bg-blue-500", secondary: "bg-white" },
+      size: { sm: "text-sm", md: "text-base" },
+    },
+    defaultVariants: {
+      intent: "primary",
+      size: "md",
+    },
+  });
+
+  button();              // uses intent=primary, size=md
+  button({ size: "sm" }); // uses intent=primary (default), size=sm (explicit)
+  ```
+
+  <Note>
+    Default variants can be overridden at call time. Passing `undefined` for a variant key falls back to its default. Passing the `"unset"` key (or `null`) explicitly removes the class for that call.
+  </Note>
+</ParamField>
+
+---
+
+## Returned function
+
+Calling `cva(config)` returns a function with the signature:
+
+```typescript
+(props?: VariantSchema & CVAClassProp) => string
+```
+
+### Props
+
+<ParamField path="[variantName]" type="string | boolean | number | null | undefined">
+  Any variant key defined in `variants`. Passing a value selects that variant's classes. Passing `undefined` falls back to `defaultVariants`.
+</ParamField>
+
+<ParamField path="class" type="ClassValue">
+  Ad-hoc classes appended after all variant classes. Mutually exclusive with `className` — TypeScript enforces that only one may be provided at a time (unless you intentionally bypass the types).
+
+  ```typescript
+  button({ intent: "primary", class: "my-custom-class" });
+  ```
+</ParamField>
+
+<ParamField path="className" type="ClassValue">
+  Identical behavior to `class`. Use this when integrating with frameworks (e.g. React) that conventionally use `className`.
+
+  ```typescript
+  button({ intent: "primary", className: "my-custom-class" });
+  ```
+</ParamField>
+
+### Return value
+
+<ResponseField name="string" type="string">
+  A single space-separated string of all resolved class names: base classes, variant classes, matching compound variant classes, and any ad-hoc `class`/`className` — in that order.
+</ResponseField>
+
+---
+
+## Examples
+
+### Basic button component
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    size: {
+      sm: "text-sm py-1 px-2",
+      md: "text-base py-2 px-4",
+      lg: "text-lg py-2.5 px-4",
+    },
+  },
+  compoundVariants: [
+    {
+      intent: "primary",
+      size: "md",
+      class: "uppercase",
+    },
+  ],
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+button();
+// => "font-semibold border rounded bg-blue-500 text-white border-transparent hover:bg-blue-600 text-base py-2 px-4 uppercase"
+
+button({ intent: "secondary", size: "sm" });
+// => "font-semibold border rounded bg-white text-gray-800 border-gray-400 hover:bg-gray-100 text-sm py-1 px-2"
+
+button({ intent: "primary", class: "w-full" });
+// => "font-semibold border rounded bg-blue-500 ... uppercase w-full"
+```
+
+### Boolean variants
+
+Variant keys are coerced to strings internally, so `true` and `false` work as variant keys:
+
+```typescript
+const button = cva({
+  variants: {
+    disabled: {
+      true: "opacity-50 cursor-not-allowed",
+      false: "cursor-pointer",
+    },
+  },
+  defaultVariants: {
+    disabled: false,
+  },
+});
+
+button({ disabled: true });  // => "opacity-50 cursor-not-allowed"
+button({ disabled: false }); // => "cursor-pointer"
+```
+
+### Resetting a variant
+
+Define an `unset` key with `null` to allow callers to produce no class for that variant:
+
+```typescript
+const button = cva({
+  variants: {
+    size: {
+      unset: null,
+      sm: "text-sm",
+      md: "text-base",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+button({ size: "unset" }); // => ""  (no size class)
+```
+
+### React usage
+
+```tsx
+import { cva, type VariantProps } from "cva";
+
+const button = cva({
+  base: "font-semibold rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white",
+      secondary: "bg-white text-gray-800",
+    },
+  },
+  defaultVariants: { intent: "primary" },
+});
+
+type ButtonProps = React.ComponentProps<"button"> & VariantProps<typeof button>;
+
+export function Button({ intent, className, ...props }: ButtonProps) {
+  return <button className={button({ intent, className })} {...props} />;
+}
+```

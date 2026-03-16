@@ -1,0 +1,223 @@
+---
+title: "React"
+description: "Use CVA with React to build type-safe, variant-driven UI components."
+---
+
+CVA pairs naturally with React. Define your variants once, then consume them through typed component props.
+
+## Basic button
+
+A straightforward `Button` component with `intent` and `size` variants:
+
+```tsx
+import { cva, type VariantProps } from "cva";
+import * as React from "react";
+
+const button = cva({
+  base: "inline-flex items-center justify-center rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+  variants: {
+    intent: {
+      primary: "bg-blue-600 text-white hover:bg-blue-700",
+      secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+      danger: "bg-red-600 text-white hover:bg-red-700",
+    },
+    size: {
+      sm: "h-8 px-3 text-sm",
+      md: "h-10 px-4 text-sm",
+      lg: "h-12 px-6 text-base",
+    },
+  },
+  compoundVariants: [
+    {
+      intent: "primary",
+      size: "lg",
+      className: "tracking-wide",
+    },
+  ],
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+type ButtonProps = React.ComponentProps<"button"> & VariantProps<typeof button>;
+
+export function Button({
+  className,
+  intent,
+  size,
+  ...props
+}: ButtonProps) {
+  return (
+    <button
+      className={button({ intent, size, className })}
+      {...props}
+    />
+  );
+}
+```
+
+<Note>
+  Passing `className` directly into the `cva` call (not via `class=` on the element) lets CVA merge it alongside variant classes. This makes one-off overrides straightforward.
+</Note>
+
+## Typing props with `VariantProps`
+
+`VariantProps` extracts the variant keys from a CVA component so you don't have to maintain a separate type:
+
+```tsx
+import { cva, type VariantProps } from "cva";
+
+const badge = cva({
+  base: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+  variants: {
+    variant: {
+      default: "bg-gray-100 text-gray-800",
+      success: "bg-green-100 text-green-800",
+      warning: "bg-yellow-100 text-yellow-800",
+      error: "bg-red-100 text-red-800",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+// VariantProps<typeof badge> => { variant?: "default" | "success" | "warning" | "error" }
+type BadgeProps = React.ComponentProps<"span"> & VariantProps<typeof badge>;
+
+export function Badge({ className, variant, ...props }: BadgeProps) {
+  return <span className={badge({ variant, className })} {...props} />;
+}
+```
+
+## Forwarding `className` with `React.ComponentProps`
+
+Using `React.ComponentProps<"button">` automatically includes the native `className` prop. Pass it into the CVA call so consumers can extend styles:
+
+```tsx
+import { cva, type VariantProps } from "cva";
+import * as React from "react";
+
+const input = cva({
+  base: "flex w-full rounded-md border bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
+  variants: {
+    state: {
+      default: "border-gray-300",
+      error: "border-red-500 focus-visible:ring-red-500",
+    },
+  },
+  defaultVariants: {
+    state: "default",
+  },
+});
+
+type InputProps = React.ComponentProps<"input"> & VariantProps<typeof input>;
+
+export function Input({ className, state, ...props }: InputProps) {
+  return <input className={input({ state, className })} {...props} />;
+}
+
+// Consumer can still add classes:
+// <Input state="error" className="mt-2" />
+```
+
+## Polymorphic `as` prop pattern
+
+For components that need to render as different elements (e.g. a button that renders as an anchor link):
+
+```tsx
+import { cva, type VariantProps } from "cva";
+import * as React from "react";
+
+const buttonStyles = cva({
+  base: "inline-flex items-center justify-center rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2",
+  variants: {
+    intent: {
+      primary: "bg-blue-600 text-white hover:bg-blue-700",
+      secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+    },
+    size: {
+      sm: "h-8 px-3 text-sm",
+      md: "h-10 px-4 text-sm",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+type AsProp<C extends React.ElementType> = { as?: C };
+
+type PolymorphicButtonProps<C extends React.ElementType> =
+  AsProp<C> &
+  Omit<React.ComponentPropsWithoutRef<C>, keyof AsProp<C>> &
+  VariantProps<typeof buttonStyles>;
+
+export function Button<C extends React.ElementType = "button">({
+  as,
+  className,
+  intent,
+  size,
+  ...props
+}: PolymorphicButtonProps<C>) {
+  const Component = as ?? "button";
+  return (
+    <Component
+      className={buttonStyles({ intent, size, className })}
+      {...props}
+    />
+  );
+}
+
+// Usage:
+// <Button>Click me</Button>
+// <Button as="a" href="/docs">Read docs</Button>
+```
+
+## Usage with `tailwind-merge`
+
+When using Tailwind CSS, conflicting utility classes won't be resolved by default. Use `tailwind-merge` via `defineConfig` to handle this:
+
+```tsx
+import { defineConfig } from "cva";
+import { twMerge } from "tailwind-merge";
+
+export const { cva, cx, compose } = defineConfig({
+  hooks: {
+    onComplete: (className) => twMerge(className),
+  },
+});
+```
+
+Then import your custom `cva` instead of the one from `"cva"` directly:
+
+```tsx
+// components/button.tsx
+import { cva, type VariantProps } from "cva"; // your configured version
+import * as React from "react";
+
+const button = cva({
+  base: "inline-flex items-center justify-center rounded-md font-medium",
+  variants: {
+    size: {
+      sm: "px-3 py-1.5 text-sm",
+      md: "px-4 py-2 text-sm",
+      lg: "px-6 py-3 text-base",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+type ButtonProps = React.ComponentProps<"button"> & VariantProps<typeof button>;
+
+export function Button({ size, className, ...props }: ButtonProps) {
+  // className overrides are safely merged — no duplicate/conflicting classes
+  return <button className={button({ size, className })} {...props} />;
+}
+```
+
+<Tip>
+  CVA works with any CSS approach in React. The patterns above apply equally to Tailwind CSS, CSS Modules, plain CSS, or any other styling solution — just swap the class name strings in your variant values.
+</Tip>

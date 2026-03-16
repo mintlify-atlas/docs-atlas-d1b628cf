@@ -1,0 +1,157 @@
+---
+title: "Variants"
+description: "Define named variants with multiple values using the variants config option in cva()."
+---
+
+Variants are the core of CVA. Each variant is a named group of mutually exclusive options, and CVA applies the corresponding classes based on which value is passed at call time.
+
+## Defining variants
+
+Pass a `variants` object to `cva()`. Each key is a variant name; its value is a map from variant option names to `ClassValue`s (strings, arrays, objects, or `null`).
+
+```typescript
+// components/button.ts
+import { cva } from "cva";
+
+const button = cva({
+  base: "font-semibold border rounded",
+  variants: {
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+      warning: "bg-yellow-500 border-transparent hover:bg-yellow-600",
+    },
+    size: {
+      small: "text-sm py-1 px-2",
+      medium: "text-base py-2 px-4",
+      large: "text-lg py-2.5 px-4",
+    },
+  },
+});
+```
+
+## The `base` option
+
+The `base` option accepts any `ClassValue` — a string, an array of strings, or a conditional object — and is always applied regardless of the active variants.
+
+<Tabs>
+  <Tab title="String">
+    ```typescript
+    const button = cva({
+      base: "font-semibold border rounded",
+    });
+    ```
+  </Tab>
+  <Tab title="Array">
+    ```typescript
+    const button = cva({
+      base: ["font-semibold", "border", "rounded"],
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## Variant value types
+
+Each variant value is a `ClassValue`, so you can use strings, arrays, or `null` to explicitly apply nothing.
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  variants: {
+    // String value
+    intent: {
+      primary: "bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary: "bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+    },
+    // Array value
+    size: {
+      small: ["text-sm", "py-1", "px-2"],
+      medium: ["text-base", "py-2", "px-4"],
+    },
+    // null = apply no classes for this option
+    disabled: {
+      unset: null,
+      true: "opacity-50 cursor-not-allowed",
+      false: "cursor-pointer",
+    },
+  },
+});
+```
+
+<Note>
+  Using `null` as a variant value is a way to explicitly select "nothing" for that variant. This is especially useful alongside `defaultVariants` when you want a reset option.
+</Note>
+
+## Boolean variants via `StringToBoolean`
+
+When a variant has keys `"true"` and/or `"false"`, TypeScript automatically widens the prop type to accept real booleans in addition to the literal strings. This is handled by the internal `StringToBoolean` mapped type.
+
+```typescript
+import { cva } from "cva";
+
+const button = cva({
+  variants: {
+    disabled: {
+      true: "opacity-50 cursor-not-allowed",
+      false: "cursor-pointer",
+    },
+  },
+});
+
+// Both of these are valid:
+button({ disabled: true });
+button({ disabled: false });
+```
+
+## Complete example
+
+A full button component with `intent`, `size`, and `disabled` variants:
+
+```typescript
+// components/button.ts
+import { cva } from "cva";
+
+const button = cva({
+  base: "button font-semibold border rounded",
+  variants: {
+    intent: {
+      unset: null,
+      primary:
+        "button--primary bg-blue-500 text-white border-transparent hover:bg-blue-600",
+      secondary:
+        "button--secondary bg-white text-gray-800 border-gray-400 hover:bg-gray-100",
+      warning:
+        "button--warning bg-yellow-500 border-transparent hover:bg-yellow-600",
+    },
+    disabled: {
+      unset: null,
+      true: "button--disabled opacity-050 cursor-not-allowed",
+      false: "button--enabled cursor-pointer",
+    },
+    size: {
+      unset: null,
+      small: "button--small text-sm py-1 px-2",
+      medium: "button--medium text-base py-2 px-4",
+      large: "button--large text-lg py-2.5 px-4",
+    },
+  },
+});
+
+// Call without variants — only base classes are applied
+button();
+// => "button font-semibold border rounded"
+
+// Call with a single variant
+button({ intent: "secondary" });
+// => "button font-semibold border rounded button--secondary bg-white ..."
+
+// Call with multiple variants
+button({ intent: "primary", size: "medium", disabled: false });
+// => "button font-semibold border rounded button--primary ... button--enabled cursor-pointer button--medium ..."
+
+// Pass additional classes with `class` or `className`
+button({ intent: "primary", class: "m-4" });
+// => "button font-semibold border rounded button--primary ... m-4"
+```

@@ -1,0 +1,125 @@
+---
+title: "Composing components"
+description: "Merge multiple CVA components into one using the compose function."
+---
+
+The `compose` function merges multiple CVA components into a single callable component. The resulting component accepts all variants from every constituent component and combines their output classes.
+
+## Basic usage
+
+```typescript
+import { compose, cva } from "cva";
+
+const box = cva({
+  variants: {
+    shadow: {
+      sm: "shadow-sm",
+      md: "shadow-md",
+    },
+  },
+  defaultVariants: {
+    shadow: "sm",
+  },
+});
+
+const stack = cva({
+  variants: {
+    gap: {
+      unset: null,
+      1: "gap-1",
+      2: "gap-2",
+      3: "gap-3",
+    },
+  },
+  defaultVariants: {
+    gap: "unset",
+  },
+});
+
+const card = compose(box, stack);
+
+// Defaults from both components apply
+card();
+// => "shadow-sm"
+
+// Override a variant from either component
+card({ shadow: "md" });
+// => "shadow-md"
+
+card({ gap: 2 });
+// => "shadow-sm gap-2"
+
+// Combine variants from both
+card({ shadow: "md", gap: 3 });
+// => "shadow-md gap-3"
+```
+
+## Passing `class` and `className`
+
+The composed component still accepts `class` and `className` to append one-off classes, just like a regular CVA component.
+
+```typescript
+card({ class: "adhoc-class" });
+// => "shadow-sm adhoc-class"
+
+card({ className: "adhoc-class" });
+// => "shadow-sm adhoc-class"
+
+card({ shadow: "md", gap: 3, class: "adhoc-class" });
+// => "shadow-md gap-3 adhoc-class"
+```
+
+## TypeScript: combined variant props
+
+The `card` function above is automatically typed to accept all variants from both `box` and `stack`:
+
+```typescript
+import type { VariantProps } from "cva";
+import { compose, cva } from "cva";
+
+const box = cva({
+  variants: {
+    shadow: { sm: "shadow-sm", md: "shadow-md" },
+  },
+  defaultVariants: { shadow: "sm" },
+});
+
+const stack = cva({
+  variants: {
+    gap: { unset: null, 1: "gap-1", 2: "gap-2", 3: "gap-3" },
+  },
+  defaultVariants: { gap: "unset" },
+});
+
+const card = compose(box, stack);
+
+// card's props type is:
+// {
+//   shadow?: "sm" | "md" | undefined;
+//   gap?: "unset" | 1 | 2 | 3 | undefined;
+// }
+```
+
+<Note>
+  `compose` uses `cx` internally to join the classes, so any `onComplete` hook configured via `defineConfig` will be called on the final combined string.
+</Note>
+
+## When to use `compose` vs manual `cx`
+
+`compose` is best when you want a single component type and call signature that merges two or more CVA components. If you need more control — for example, to pass different subsets of props to each child component — you can still combine components manually using `cx`:
+
+```typescript
+import type { VariantProps } from "cva";
+import { cva, cx } from "cva";
+
+const box = cva({ variants: { shadow: { sm: "shadow-sm", md: "shadow-md" } } });
+const stack = cva({ variants: { gap: { 1: "gap-1", 2: "gap-2" } } });
+
+type BoxProps = VariantProps<typeof box>;
+type StackProps = VariantProps<typeof stack>;
+
+interface CardProps extends BoxProps, StackProps {}
+
+export const card = ({ shadow, gap }: CardProps = {}) =>
+  cx(box({ shadow }), stack({ gap }));
+```

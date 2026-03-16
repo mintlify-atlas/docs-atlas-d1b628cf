@@ -1,0 +1,135 @@
+---
+title: "Astro"
+description: "Use CVA in Astro component frontmatter to generate variant class strings for your templates."
+---
+
+Astro components have a frontmatter script section that runs at build time. CVA fits naturally here — call it in the frontmatter and bind the result in your template.
+
+## Basic button component
+
+```astro
+---
+// Button.astro
+import { cva, type VariantProps } from "cva";
+
+const button = cva({
+  base: "inline-flex items-center justify-center rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+  variants: {
+    intent: {
+      primary: "bg-blue-600 text-white hover:bg-blue-700",
+      secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+      danger: "bg-red-600 text-white hover:bg-red-700",
+    },
+    size: {
+      sm: "h-8 px-3 text-sm",
+      md: "h-10 px-4 text-sm",
+      lg: "h-12 px-6 text-base",
+    },
+  },
+  compoundVariants: [
+    {
+      intent: "primary",
+      size: "lg",
+      className: "tracking-wide",
+    },
+  ],
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+type ButtonVariants = VariantProps<typeof button>;
+
+interface Props extends ButtonVariants {
+  class?: string;
+}
+
+const { intent, size, class: className } = Astro.props;
+---
+
+<button class={button({ intent, size, className })}>
+  <slot />
+</button>
+```
+
+## Usage in a page
+
+```astro
+---
+// index.astro
+import Button from "../components/Button.astro";
+---
+
+<html lang="en">
+  <body>
+    <Button intent="primary" size="lg">Get started</Button>
+    <Button intent="secondary">Learn more</Button>
+    <Button intent="danger" size="sm">Delete account</Button>
+  </body>
+</html>
+```
+
+## Defining variants in a shared utility file
+
+For reuse across multiple `.astro` files, define your CVA components in a separate TypeScript module:
+
+```typescript
+// src/styles/variants.ts
+import { cva } from "cva";
+export type { VariantProps } from "cva";
+
+export const button = cva({
+  base: "inline-flex items-center justify-center rounded font-medium transition-colors",
+  variants: {
+    intent: {
+      primary: "bg-blue-600 text-white hover:bg-blue-700",
+      secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+    },
+    size: {
+      sm: "h-8 px-3 text-sm",
+      md: "h-10 px-4 text-sm",
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+
+export const badge = cva({
+  base: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+  variants: {
+    variant: {
+      default: "bg-gray-100 text-gray-800",
+      success: "bg-green-100 text-green-800",
+      warning: "bg-yellow-100 text-yellow-800",
+    },
+  },
+  defaultVariants: { variant: "default" },
+});
+```
+
+Then import in your `.astro` files:
+
+```astro
+---
+import { button, badge, type VariantProps } from "../styles/variants";
+
+type BadgeVariants = VariantProps<typeof badge>;
+
+interface Props {
+  variant?: BadgeVariants["variant"];
+}
+
+const { variant } = Astro.props;
+---
+
+<span class={badge({ variant })}>
+  <slot />
+</span>
+```
+
+<Tip>
+  Defining variants in a shared `.ts` file also makes them available to any framework components (React, Vue, Svelte) used inside the same Astro project.
+</Tip>

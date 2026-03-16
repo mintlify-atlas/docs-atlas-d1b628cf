@@ -1,0 +1,220 @@
+---
+title: "Other use cases"
+description: "CVA works beyond buttons — use it for any component that needs variant-based string generation."
+---
+
+Although primarily designed for handling class names, at its core `cva` is a utility for managing a string based on a set of variants. This opens up a range of uses beyond styled buttons.
+
+## Dynamic text content
+
+`cva` can generate text strings, not just class names:
+
+```typescript
+import { cva } from "cva";
+
+const greeter = cva({
+  base: "Good morning!",
+  variants: {
+    isLoggedIn: {
+      true: "Here's a secret only logged in users can see",
+      false: "Log in to find out more…",
+    },
+  },
+  defaultVariants: {
+    isLoggedIn: "false",
+  },
+});
+
+greeter();
+// => "Good morning! Log in to find out more…"
+
+greeter({ isLoggedIn: "true" });
+// => "Good morning! Here's a secret only logged in users can see"
+```
+
+## Alert component
+
+```typescript
+import { cva, type VariantProps } from "cva";
+
+const alert = cva({
+  base: "relative w-full rounded-lg border p-4 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4",
+  variants: {
+    variant: {
+      default: "bg-white text-gray-900 border-gray-200",
+      info: "border-blue-200 bg-blue-50 text-blue-900",
+      success: "border-green-200 bg-green-50 text-green-900",
+      warning: "border-yellow-200 bg-yellow-50 text-yellow-900",
+      error: "border-red-200 bg-red-50 text-red-900",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+type AlertVariants = VariantProps<typeof alert>;
+
+alert({ variant: "success" });
+// => "relative w-full rounded-lg border p-4 ... border-green-200 bg-green-50 text-green-900"
+```
+
+## Input component
+
+```typescript
+import { cva, type VariantProps } from "cva";
+
+const input = cva({
+  base: "flex w-full rounded-md border bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
+  variants: {
+    state: {
+      default: "border-gray-300 focus-visible:ring-blue-500",
+      error: "border-red-500 focus-visible:ring-red-500 text-red-900",
+      success: "border-green-500 focus-visible:ring-green-500",
+    },
+    size: {
+      sm: "h-8 text-xs",
+      md: "h-10 text-sm",
+      lg: "h-12 text-base",
+    },
+  },
+  defaultVariants: {
+    state: "default",
+    size: "md",
+  },
+});
+
+input();
+// => "flex w-full rounded-md border ... border-gray-300 focus-visible:ring-blue-500 h-10 text-sm"
+
+input({ state: "error" });
+// => "... border-red-500 focus-visible:ring-red-500 text-red-900 h-10 text-sm"
+```
+
+## Badge component
+
+```typescript
+import { cva, type VariantProps } from "cva";
+
+const badge = cva({
+  base: "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+  variants: {
+    variant: {
+      default: "border-transparent bg-gray-900 text-white",
+      secondary: "border-transparent bg-gray-100 text-gray-900",
+      outline: "text-gray-900",
+      success: "border-transparent bg-green-100 text-green-800",
+      warning: "border-transparent bg-yellow-100 text-yellow-800",
+      error: "border-transparent bg-red-100 text-red-800",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+export type BadgeVariants = VariantProps<typeof badge>;
+```
+
+## Composing multiple CVA components
+
+Use `compose` to merge two or more CVA components into a single callable:
+
+```typescript
+import { cva, compose } from "cva";
+
+const box = cva({
+  base: "rounded-lg p-4",
+  variants: {
+    shadow: {
+      none: "",
+      sm: "shadow-sm",
+      md: "shadow-md",
+      lg: "shadow-lg",
+    },
+  },
+  defaultVariants: { shadow: "sm" },
+});
+
+const theme = cva({
+  variants: {
+    color: {
+      light: "bg-white text-gray-900",
+      dark: "bg-gray-900 text-white",
+    },
+  },
+  defaultVariants: { color: "light" },
+});
+
+const card = compose(box, theme);
+
+card({ shadow: "md", color: "dark" });
+// => "rounded-lg p-4 shadow-md bg-gray-900 text-white"
+```
+
+## CSS Modules
+
+CVA works with CSS Modules — use the imported class names as variant values:
+
+```typescript
+import { cva } from "cva";
+import styles from "./button.module.css";
+
+const button = cva({
+  base: styles.button,
+  variants: {
+    intent: {
+      primary: styles.primary,
+      secondary: styles.secondary,
+    },
+    size: {
+      sm: styles.sm,
+      md: styles.md,
+      lg: styles.lg,
+    },
+  },
+  defaultVariants: {
+    intent: "primary",
+    size: "md",
+  },
+});
+```
+
+## Plain CSS classes
+
+CVA does not require Tailwind. It works with any plain class strings:
+
+```typescript
+import { cva } from "cva";
+
+const chip = cva({
+  base: "chip",
+  variants: {
+    color: {
+      blue: "chip-blue",
+      green: "chip-green",
+      red: "chip-red",
+    },
+    size: {
+      sm: "chip-sm",
+      md: "chip-md",
+    },
+    removable: {
+      true: "chip-removable",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    color: "blue",
+    size: "md",
+    removable: false,
+  },
+});
+
+chip({ color: "green", removable: true });
+// => "chip chip-green chip-md chip-removable"
+```
+
+<Tip>
+  CVA returns a plain string. If you need to apply it somewhere that accepts a string (an HTML `class` attribute, a template literal, a data attribute), it works without any adapter.
+</Tip>

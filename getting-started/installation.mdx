@@ -1,0 +1,101 @@
+---
+title: "Installation"
+description: "Install CVA and start building type-safe component variants."
+---
+
+## Packages
+
+CVA is available under two package names:
+
+- **`cva`** — current package, v1 beta. Recommended for new projects.
+- **`class-variance-authority`** — legacy package, v0.x stable. Use if you need a stable release.
+
+<Note>
+  The `cva` package name was transferred to the CVA project on 2022/02/16. It is now the canonical package going forward.
+</Note>
+
+## Install
+
+<Tabs>
+  <Tab title="cva (current)">
+    <CodeGroup>
+
+```bash npm
+npm install cva
+```
+
+```bash yarn
+yarn add cva
+```
+
+```bash pnpm
+pnpm add cva
+```
+
+    </CodeGroup>
+  </Tab>
+  <Tab title="class-variance-authority (legacy)">
+    <CodeGroup>
+
+```bash npm
+npm install class-variance-authority
+```
+
+```bash yarn
+yarn add class-variance-authority
+```
+
+```bash pnpm
+pnpm add class-variance-authority
+```
+
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## TypeScript
+
+TypeScript is an optional peer dependency, but strongly recommended for the best experience with variant types.
+
+```json package.json
+{
+  "peerDependencies": {
+    "typescript": ">= 4.5.5"
+  }
+}
+```
+
+<Tip>
+  TypeScript 4.5.5 or later is required if you want full type inference for `VariantProps` and variant configurations.
+</Tip>
+
+## Imports
+
+The `cva` package exports the following:
+
+```typescript
+import {
+  // Core
+  cva,
+  cx,
+  compose,
+  defineConfig,
+
+  // Types
+  type VariantProps,
+  type ClassValue,
+  type CXOptions,
+  type CXReturn,
+} from "cva";
+```
+
+| Export | Kind | Description |
+|---|---|---|
+| `cva` | function | Creates a variant-aware class builder. |
+| `cx` | function | Merges class values (wraps `clsx`). |
+| `compose` | function | Composes multiple `cva` components together. |
+| `defineConfig` | function | Creates a custom `cva`/`cx`/`compose` instance with hooks. |
+| `VariantProps` | type | Extracts the variant prop types from a `cva` component. |
+| `ClassValue` | type | Accepted values for class inputs. |
+| `CXOptions` | type | Parameter types for `cx`. |
+| `CXReturn` | type | Return type of `cx`. |

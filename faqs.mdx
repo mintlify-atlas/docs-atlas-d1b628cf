@@ -1,0 +1,119 @@
+---
+title: "FAQs"
+description: "Answers to frequently asked questions about CVA."
+---
+
+<AccordionGroup>
+
+  <Accordion title="Why don't you provide a `styled` API?">
+    Long story short: it's unnecessary.
+
+    `cva` encourages you to think of components as traditional CSS classes:
+
+    - **Less JavaScript is better.** There is no runtime abstraction wrapping your element.
+    - **Framework agnostic.** Class strings work everywhere — React, Vue, Svelte, plain HTML.
+    - **Polymorphism is free.** Apply the generated class to whichever HTML element you prefer; no need for an `as` prop.
+    - **Unopinionated by design.** You decide how to wire the class string into your component.
+
+    Because CVA returns a plain class string, applying it to any element is straightforward — pass the result to `className` (React), `class` (Vue/Svelte/Astro), or any framework's class binding. No special `as` prop is needed.
+  </Accordion>
+
+  <Accordion title="How do I create responsive variants like Stitches.js?">
+    CVA doesn't support responsive variants natively, and it doesn't intend to. CVA has no knowledge of how you choose to apply CSS classes.
+
+    Two recommended workarounds:
+
+    **1. Show/hide elements with different variants per breakpoint:**
+
+    ```tsx
+    export const Example = () => (
+      <>
+        <div className="hidden sm:inline-flex">
+          <button className={button({ intent: "primary" })}>Hidden until sm</button>
+        </div>
+        <div className="inline-flex sm:hidden">
+          <button className={button({ intent: "secondary" })}>Hidden after sm</button>
+        </div>
+      </>
+    );
+    ```
+
+    **2. Create bespoke variant names that encode the breakpoint:**
+
+    ```typescript
+    button({ intent: "primaryUntilMd" });
+    ```
+
+    <Info>
+      Responsive variants are a large undertaking requiring deep integration with build tools and frameworks. In practice, the show/hide approach is usually sufficient.
+    </Info>
+  </Accordion>
+
+  <Accordion title="How do I integrate with Tailwind Merge?">
+    Use `defineConfig` with the `onComplete` hook to pipe every resolved class string through `twMerge`:
+
+    ```typescript
+    // lib/cva.ts
+    import { defineConfig } from "cva";
+    import { twMerge } from "tailwind-merge";
+
+    export const { cva, cx, compose } = defineConfig({
+      hooks: {
+        onComplete: (className) => twMerge(className),
+      },
+    });
+    ```
+
+    Then import `cva`, `cx`, and `compose` from `~/lib/cva` instead of directly from `"cva"`.
+
+    This ensures that conflicting Tailwind utility classes (e.g. `px-2` overridden by `px-4`) are resolved correctly in every component.
+
+    See the [`defineConfig`](/api-reference/define-config) reference for full details.
+  </Accordion>
+
+  <Accordion title="What's the difference between the `cva` and `class-variance-authority` packages?">
+    | Package | Status | Notes |
+    |---|---|---|
+    | `cva` | Current (beta) | New package name, actively developed |
+    | `class-variance-authority` | Legacy (stable) | Original package name, maintenance mode |
+
+    The `cva` package is the actively maintained successor. New features and fixes target `cva`. The `class-variance-authority` package remains available for projects that depend on it but receives no new development.
+
+    If you are starting a new project, install `cva`.
+  </Accordion>
+
+  <Accordion title="Can I use CVA without TypeScript?">
+    Yes. CVA is a plain JavaScript library that ships TypeScript declarations as an optional layer. You can import and use `cva`, `cx`, `compose`, and `defineConfig` in any `.js` project:
+
+    ```javascript
+    import { cva } from "cva";
+
+    const button = cva({
+      base: "font-semibold rounded",
+      variants: {
+        intent: {
+          primary: "bg-blue-500 text-white",
+          secondary: "bg-white text-gray-800",
+        },
+      },
+      defaultVariants: { intent: "primary" },
+    });
+
+    button({ intent: "secondary" });
+    // => "font-semibold rounded bg-white text-gray-800"
+    ```
+
+    You simply won't get variant type checking or autocompletion without TypeScript.
+  </Accordion>
+
+  <Accordion title="What is the bundle size?">
+    The `cva` package is approximately **~1.6 KB minzipped**.
+
+    CVA uses [`clsx`](https://github.com/lukeed/clsx) internally for class concatenation. `clsx` itself is ~0.5 KB minzipped and is included in that total.
+
+    <Note>
+      `tailwind-merge` (if you choose to use it via `defineConfig`) is a separate dependency with its own bundle size (~6 KB minzipped). It is entirely optional.
+    </Note>
+  </Accordion>
+
+</AccordionGroup>
